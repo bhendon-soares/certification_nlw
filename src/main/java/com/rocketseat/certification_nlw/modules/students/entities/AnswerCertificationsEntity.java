@@ -1,4 +1,4 @@
-package com.rocketseat.certification_nlw.modules.students.controllers.entities;
+package com.rocketseat.certification_nlw.modules.students.entities;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
