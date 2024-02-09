@@ -3,21 +3,38 @@ package com.rocketseat.certification_nlw.modules.students.useCases;
 import com.rocketseat.certification_nlw.modules.questions.entities.QuestionEntity;
 import com.rocketseat.certification_nlw.modules.questions.repositories.QuestionRepository;
 import com.rocketseat.certification_nlw.modules.students.dto.StudentCertificationAnswerDTO;
+import com.rocketseat.certification_nlw.modules.students.entities.AnswerCertificationsEntity;
+import com.rocketseat.certification_nlw.modules.students.entities.CertificationStudentEntity;
+import com.rocketseat.certification_nlw.modules.students.entities.StudentEntity;
+import com.rocketseat.certification_nlw.modules.students.repositories.CertificationStudentRepository;
+import com.rocketseat.certification_nlw.modules.students.repositories.StudentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 public class StudentCertificationAnswersUseCase {
 
     @Autowired
+    private StudentRepository studentRepository;
+
+    @Autowired
     private QuestionRepository questionRepository;
 
-    public StudentCertificationAnswerDTO execute(StudentCertificationAnswerDTO dto) {
+    @Autowired
+    private CertificationStudentRepository certificationStudentRepository;
+
+    public CertificationStudentEntity execute(StudentCertificationAnswerDTO dto) {
 
         //Buscar as alternativas das perguntas - Correta ou Incorreta
         List<QuestionEntity> questionsEntity = questionRepository.findByTechnology(dto.getTechnology());
+        List<AnswerCertificationsEntity> answersCertifications = new ArrayList<>();
+
+        AtomicInteger correctAnswers = new AtomicInteger(0);
 
         dto.getQuestionsAnswers()
                 .stream().forEach(questionAnswer -> {
@@ -29,11 +46,50 @@ public class StudentCertificationAnswersUseCase {
 
                     if(findCorrectAlternative.getId().equals(questionAnswer.getAlternativeID())) {
                         questionAnswer.setCorrect(true);
+                        correctAnswers.incrementAndGet();
                     } else {
                         questionAnswer.setCorrect(false);
                     }
+
+                    var answerrsCertificationsEntity = AnswerCertificationsEntity.builder()
+                            .answerID(questionAnswer.getAlternativeID())
+                            .questionID(questionAnswer.getQuestionID())
+                            .isCorrect(questionAnswer.isCorrect()).build();
+
+                    answersCertifications.add(answerrsCertificationsEntity);
                 });
-        return dto;
+
+        //Verificar se o estudante existe pelo email
+        var student = studentRepository.findByEmail(dto.getEmail());
+        UUID studentID;
+        if(student.isEmpty()) {
+            var studentCreated = StudentEntity.builder().email(dto.getEmail()).build();
+            studentRepository.save(studentCreated);
+            studentID = studentCreated.getId();
+        } else {
+            studentID = student.get().getId();
+        }
+
+
+
+        CertificationStudentEntity certificationStudentEntity = CertificationStudentEntity.builder()
+                .technology(dto.getTechnology())
+                .studentID(studentID)
+                .grate(correctAnswers.get())
+                .build();
+
+        var certificationStudentCreated = certificationStudentRepository.save(certificationStudentEntity);
+
+        answersCertifications.stream().forEach(answersCertification -> {
+            answersCertification.setCertificationID(certificationStudentEntity.getId());
+            answersCertification.setCertificationStudentEntity(certificationStudentEntity);
+        });
+
+        certificationStudentEntity.setAnswerCertificationsEntities(answersCertifications);
+
+        certificationStudentRepository.save(certificationStudentEntity);
+
+        return certificationStudentCreated;
         //Salvar as informações da certificação
     }
 }
