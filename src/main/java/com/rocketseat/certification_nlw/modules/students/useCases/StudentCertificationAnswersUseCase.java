@@ -3,6 +3,7 @@ package com.rocketseat.certification_nlw.modules.students.useCases;
 import com.rocketseat.certification_nlw.modules.questions.entities.QuestionEntity;
 import com.rocketseat.certification_nlw.modules.questions.repositories.QuestionRepository;
 import com.rocketseat.certification_nlw.modules.students.dto.StudentCertificationAnswerDTO;
+import com.rocketseat.certification_nlw.modules.students.dto.VerifyHasCertificationDTO;
 import com.rocketseat.certification_nlw.modules.students.entities.AnswerCertificationsEntity;
 import com.rocketseat.certification_nlw.modules.students.entities.CertificationStudentEntity;
 import com.rocketseat.certification_nlw.modules.students.entities.StudentEntity;
@@ -28,7 +29,17 @@ public class StudentCertificationAnswersUseCase {
     @Autowired
     private CertificationStudentRepository certificationStudentRepository;
 
-    public CertificationStudentEntity execute(StudentCertificationAnswerDTO dto) {
+    @Autowired
+    private VerifyIfHasCertificationUseCase verifyIfHasCertificationUseCase;
+
+    public CertificationStudentEntity execute(StudentCertificationAnswerDTO dto) throws Exception {
+
+        var hasCertification = this.verifyIfHasCertificationUseCase
+                .execute(new VerifyHasCertificationDTO(dto.getEmail(), dto.getTechnology()));
+
+        if(hasCertification){
+            throw new Exception("Você já tirou sua certificação");
+        }
 
         //Buscar as alternativas das perguntas - Correta ou Incorreta
         List<QuestionEntity> questionsEntity = questionRepository.findByTechnology(dto.getTechnology());
