@@ -1,6 +1,6 @@
 # Certification NLW
 
-Este projeto foi desenvolvido como parte do evento Next Level Week (NLW) da Rocketseat, uma iniciativa que visa proporcionar uma experiência intensiva de aprendizado em tecnologias específicas.
+Este projeto foi desenvolvido como parte do evento Next Level Week (NLW) da [Rocketseat](https://www.rocketseat.com.br/), uma iniciativa que visa proporcionar uma experiência intensiva de aprendizado em tecnologias específicas.
 
 ## Descrição
 
